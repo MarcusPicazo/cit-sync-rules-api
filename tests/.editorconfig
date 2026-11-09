@@ -1,0 +1,5 @@
+[*.cs]
+# Test names use Method_scenario_expectation style.
+dotnet_diagnostic.CA1707.severity = none
+# Parameter names in assertions refer to production code, not to the test's own parameters.
+dotnet_diagnostic.CA1507.severity = none

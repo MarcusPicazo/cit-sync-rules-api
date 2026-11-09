@@ -1,0 +1,8 @@
+@baseUrl = http://localhost:5212
+
+GET {{baseUrl}}/health
+
+###
+
+GET {{baseUrl}}/api/v1/info
+Accept: application/json
