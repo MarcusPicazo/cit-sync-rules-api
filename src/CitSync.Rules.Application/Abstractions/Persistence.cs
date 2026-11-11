@@ -1,6 +1,7 @@
 using CitSync.Rules.Application.Auditing;
 using CitSync.Rules.Application.Common;
 using CitSync.Rules.Application.Reservations;
+using CitSync.Rules.Application.Rules;
 using CitSync.Rules.Application.RuleSets;
 using CitSync.Rules.Domain.Auditing;
 using CitSync.Rules.Domain.Reservations;
@@ -42,6 +43,18 @@ public interface IReservationRepository
 
     Task<PagedResult<Reservation>> ListAsync(ListReservationsQuery query, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Reservations of a resource that overlap [startUtc, endUtc) and still occupy it
+    /// (Approved, plus Pending when includePending). ONE sargable query on the filtered index.
+    /// </summary>
+    Task<IReadOnlyList<OccupiedSlot>> GetOccupiedSlotsAsync(
+        Guid resourceId,
+        DateTime startUtc,
+        DateTime endUtc,
+        bool includePending,
+        Guid? excludeReservationId,
+        CancellationToken cancellationToken);
+
     void Add(Reservation reservation);
 }
 
@@ -59,6 +72,13 @@ public interface IRuleSetRepository
     Task<bool> NameExistsAsync(string name, CancellationToken cancellationToken);
 
     Task<bool> ScopeExistsAsync(RuleScope scope, string scopeKey, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The Active version of every rule set that applies to a resource: its own (Resource scope),
+    /// its building's (when it has one) and the school-wide one. Read-only.
+    /// </summary>
+    Task<IReadOnlyList<ActiveRuleSetVersion>> GetActiveVersionsForAsync(
+        Guid resourceId, string? building, CancellationToken cancellationToken);
 
     void Add(RuleSet ruleSet);
 }

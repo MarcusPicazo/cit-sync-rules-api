@@ -1,5 +1,6 @@
 using CitSync.Rules.Application.Abstractions;
 using CitSync.Rules.Application.Common;
+using CitSync.Rules.Application.Rules.Engine;
 using CitSync.Rules.Domain.RuleSets;
 using FluentValidation;
 using FluentValidation.Results;
@@ -38,7 +39,8 @@ public sealed class RuleSetService(
     IValidator<ListRuleSetsQuery> listValidator,
     IValidator<CreateRuleSetRequest> createValidator,
     IValidator<CreateRuleSetVersionRequest> versionValidator,
-    IValidator<RejectRuleSetVersionRequest> rejectValidator) : IRuleSetService
+    IValidator<RejectRuleSetVersionRequest> rejectValidator,
+    IRuleParametersValidator parametersValidator) : IRuleSetService
 {
     private DateTime UtcNow => timeProvider.GetUtcNow().UtcDateTime;
 
@@ -107,6 +109,18 @@ public sealed class RuleSetService(
     {
         ArgumentNullException.ThrowIfNull(request);
         await versionValidator.ValidateAndThrowAsync(request, cancellationToken);
+
+        // Each rule's strategy knows the shape of its own parameters; reject bad ones NOW,
+        // not when someone tries to book months later.
+        var parameterErrors = request.Rules
+            .SelectMany((rule, index) => parametersValidator
+                .Validate(rule.Type, rule.Parameters.GetRawText())
+                .Select(message => new ValidationFailure($"Rules[{index}].Parameters", message)))
+            .ToList();
+        if (parameterErrors.Count > 0)
+        {
+            throw new ValidationException(parameterErrors);
+        }
 
         var ruleSet = await ruleSets.GetForUpdateAsync(id, cancellationToken)
             ?? throw NotFoundException.For(nameof(RuleSet), id);

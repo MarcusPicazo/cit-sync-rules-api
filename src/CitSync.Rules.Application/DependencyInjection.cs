@@ -1,5 +1,7 @@
 using CitSync.Rules.Application.Auditing;
 using CitSync.Rules.Application.Reservations;
+using CitSync.Rules.Application.Rules.Engine;
+using CitSync.Rules.Application.Rules.Evaluators;
 using CitSync.Rules.Application.RuleSets;
 using CitSync.Rules.Application.Resources;
 using FluentValidation;
@@ -26,6 +28,21 @@ public static class DependencyInjection
         services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<IRuleSetService, RuleSetService>();
         services.AddScoped<IAuditService, AuditService>();
+
+        // Rule engine (strategy pattern): one IRuleEvaluator per RuleType. The engine receives
+        // IEnumerable<IRuleEvaluator> and indexes them by type. A new rule = one class + one line here.
+        // Scoped because NoOverlap uses the (scoped) reservation repository.
+        services.AddScoped<IRuleEvaluator, OpeningHoursEvaluator>();
+        services.AddScoped<IRuleEvaluator, MaxDurationEvaluator>();
+        services.AddScoped<IRuleEvaluator, NoOverlapEvaluator>();
+        services.AddScoped<IRuleEvaluator, RoleRestrictionEvaluator>();
+        services.AddScoped<IRuleEvaluator, BlackoutDatesEvaluator>();
+        services.AddScoped<IRuleEvaluator, LeadTimeEvaluator>();
+
+        // One engine instance per request, exposed through two narrow interfaces (ISP).
+        services.AddScoped<RuleEngine>();
+        services.AddScoped<IRuleEngine>(sp => sp.GetRequiredService<RuleEngine>());
+        services.AddScoped<IRuleParametersValidator>(sp => sp.GetRequiredService<RuleEngine>());
 
         return services;
     }

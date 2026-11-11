@@ -19,8 +19,8 @@ public class RuleSetsEndpointsTests(RulesApiFactory factory)
     {
         rules = new object[]
         {
-            new { type = "MaxDuration", parameters = new { maxMinutes, role = "Alumno" } },
-            new { type = "LeadTime", parameters = new { hours = 24 } },
+            new { type = "MaxDuration", parameters = new { maxMinutes, roles = new[] { "Alumno" } } },
+            new { type = "LeadTime", parameters = new { minHours = 24 } },
         },
     };
 

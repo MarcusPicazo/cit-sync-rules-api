@@ -78,9 +78,23 @@ Requirements: .NET 10 SDK, Docker Desktop, and the EF tool (`dotnet tool install
 | POST | `/api/v1/reservations` | checks the resource exists, is active, and has enough capacity |
 | POST | `/api/v1/reservations/{id}/approve` \| `/reject` \| `/cancel` | 409 on an invalid state transition |
 | GET/POST | `/api/v1/rulesets`, `/api/v1/rulesets/{id}/versions` | versioned rule sets; send `X-Actor` |
-| POST | `/api/v1/rulesets/{id}/versions/{n}/submit` | `/approve` | `/reject` | approving retires the previous active version |
+| POST | `/api/v1/rulesets/{id}/versions/{n}/submit` \| `/approve` \| `/reject` | approving retires the previous active version; optional `If-Match` |
+| POST | `/api/v1/rules/evaluate` | dry run of a reservation against the Active rules: `{ allowed, violations[], appliedRuleSets[] }` |
 | GET | `/api/v1/audit?entity=&entityId=` | automatic audit trail |
 | GET | `/health`, `/health/live`, `/health/ready` | liveness / readiness |
+
+## How rules are evaluated
+
+- Rule sets exist per **scope**: the whole school, a building, or a single resource. Only their
+  **Active** version is evaluated.
+- For each rule type, the **most specific scope wins** (resource > building > school). Rule types
+  a scope doesn't define are inherited. A lab can have its own `OpeningHours` and still inherit
+  the school's `LeadTime`.
+- One class per rule type (strategy pattern): `OpeningHours`, `MaxDuration`, `NoOverlap`,
+  `RoleRestriction`, `BlackoutDates`, `LeadTime`. Each one validates its own JSON parameters when
+  a version is created; unknown or misspelled parameters are rejected.
+- `NoOverlap` compares the **peak** concurrent usage against `capacity` using one sargable query.
+  See [docs/query-tuning.md](docs/query-tuning.md).
 
 ## Phases
 
@@ -88,9 +102,9 @@ Requirements: .NET 10 SDK, Docker Desktop, and the EF tool (`dotnet tool install
 |---|---|---|
 | 1 | Solution skeleton, Docker SQL Server, DbContext, first migration, health check, Swagger, CI | ✅ Done |
 | 2 | Resources + Reservations CRUD with FluentValidation and ProblemDetails | ✅ Done |
-| 3 | RuleSets with versioning + approval state machine + audit interceptor + optimistic concurrency | ✅ Done (owner TODOs pending) |
-| 4 | Rule evaluation engine (strategy pattern) + `POST /api/v1/rules/evaluate` | ⏳ Next |
-| 5 | Full unit + integration coverage of every rule type and state transition | — |
+| 3 | RuleSets with versioning + approval state machine + audit interceptor + optimistic concurrency | ✅ Done |
+| 4 | Rule evaluation engine (strategy pattern) + `POST /api/v1/rules/evaluate` | ✅ Done (owner TODOs pending) |
+| 5 | Full unit + integration coverage of every rule type and state transition | ⏳ Next |
 | 6 | Serilog, OpenTelemetry, query-tuning doc, runbook, ADRs, AI-usage section | — |
 | 7 | CIT-Sync integration: BookingModal calls `/evaluate`, AdminPanel approves/rejects through the API | — |
 
