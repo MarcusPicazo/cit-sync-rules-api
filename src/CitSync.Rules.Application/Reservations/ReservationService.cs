@@ -14,11 +14,14 @@ public interface IReservationService
 
     Task<ReservationResponse> CreateAsync(CreateReservationRequest request, CancellationToken cancellationToken);
 
-    Task<ReservationResponse> ApproveAsync(Guid id, CancellationToken cancellationToken);
+    // expectedVersion: the "version" the client last saw (If-Match header). Null = don't check.
+    Task<ReservationResponse> ApproveAsync(Guid id, byte[]? expectedVersion, CancellationToken cancellationToken);
 
-    Task<ReservationResponse> RejectAsync(Guid id, ChangeReservationStatusRequest request, CancellationToken cancellationToken);
+    Task<ReservationResponse> RejectAsync(
+        Guid id, ChangeReservationStatusRequest request, byte[]? expectedVersion, CancellationToken cancellationToken);
 
-    Task<ReservationResponse> CancelAsync(Guid id, ChangeReservationStatusRequest request, CancellationToken cancellationToken);
+    Task<ReservationResponse> CancelAsync(
+        Guid id, ChangeReservationStatusRequest request, byte[]? expectedVersion, CancellationToken cancellationToken);
 }
 
 public sealed class ReservationService(
@@ -82,31 +85,33 @@ public sealed class ReservationService(
         return ReservationResponse.From(reservation);
     }
 
-    public Task<ReservationResponse> ApproveAsync(Guid id, CancellationToken cancellationToken) =>
-        ChangeStatusAsync(id, r => r.Approve(), cancellationToken);
+    public Task<ReservationResponse> ApproveAsync(
+        Guid id, byte[]? expectedVersion, CancellationToken cancellationToken) =>
+        ChangeStatusAsync(id, expectedVersion, r => r.Approve(), cancellationToken);
 
     public async Task<ReservationResponse> RejectAsync(
-        Guid id, ChangeReservationStatusRequest request, CancellationToken cancellationToken)
+        Guid id, ChangeReservationStatusRequest request, byte[]? expectedVersion, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         await statusValidator.ValidateAndThrowAsync(request, cancellationToken);
-        return await ChangeStatusAsync(id, r => r.Reject(request.Reason), cancellationToken);
+        return await ChangeStatusAsync(id, expectedVersion, r => r.Reject(request.Reason), cancellationToken);
     }
 
     public async Task<ReservationResponse> CancelAsync(
-        Guid id, ChangeReservationStatusRequest request, CancellationToken cancellationToken)
+        Guid id, ChangeReservationStatusRequest request, byte[]? expectedVersion, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         await statusValidator.ValidateAndThrowAsync(request, cancellationToken);
-        return await ChangeStatusAsync(id, r => r.Cancel(request.Reason), cancellationToken);
+        return await ChangeStatusAsync(id, expectedVersion, r => r.Cancel(request.Reason), cancellationToken);
     }
 
     private async Task<ReservationResponse> ChangeStatusAsync(
-        Guid id, Action<Reservation> transition, CancellationToken cancellationToken)
+        Guid id, byte[]? expectedVersion, Action<Reservation> transition, CancellationToken cancellationToken)
     {
         var reservation = await reservations.GetForUpdateAsync(id, cancellationToken)
             ?? throw NotFoundException.For(nameof(Reservation), id);
 
+        ConcurrencyGuard.EnsureVersion(expectedVersion, reservation.RowVersion, nameof(Reservation), id);
         transition(reservation); // the entity enforces the state machine (DomainException → 409)
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return ReservationResponse.From(reservation);

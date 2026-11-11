@@ -33,6 +33,12 @@ internal sealed class ProblemDetailsExceptionHandler(IProblemDetailsService prob
                 Title = "Not found",
                 Detail = notFound.Message,
             },
+            ConcurrencyConflictException concurrency => new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Concurrency conflict",
+                Detail = concurrency.Message,
+            },
             ConflictException conflict => new ProblemDetails
             {
                 Status = StatusCodes.Status409Conflict,

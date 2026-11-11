@@ -1,8 +1,10 @@
 using System.Text.Json.Serialization;
 using Asp.Versioning;
 using CitSync.Rules.Api.ErrorHandling;
+using CitSync.Rules.Api.Http;
 using CitSync.Rules.Api.OpenApi;
 using CitSync.Rules.Application;
+using CitSync.Rules.Application.Abstractions;
 using CitSync.Rules.Infrastructure;
 using CitSync.Rules.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -11,6 +13,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Who is calling (X-Actor header for now): used by the approval workflow and the audit trail.
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentActor, HttpCurrentActor>();
 
 builder.Services
     .AddControllers(options =>

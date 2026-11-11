@@ -27,6 +27,10 @@ internal sealed class ReservationConfiguration : IEntityTypeConfiguration<Reserv
 
         builder.Ignore(r => r.Duration);
 
+        // rowversion: SQL Server bumps it on every UPDATE; EF adds "AND RowVersion = @original"
+        // to the UPDATE and throws DbUpdateConcurrencyException if 0 rows match.
+        builder.Property(r => r.RowVersion).IsRowVersion();
+
         // FK without a navigation property: Domain stays simple, the DB still guarantees integrity.
         builder.HasOne<Resource>()
             .WithMany()

@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using CitSync.Rules.Api.Http;
 using CitSync.Rules.Application.Common;
 using CitSync.Rules.Application.Reservations;
 using Microsoft.AspNetCore.Mvc;
@@ -45,8 +46,11 @@ public sealed class ReservationsController(IReservationService reservations) : C
     [ProducesResponseType<ReservationResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ReservationResponse>> Approve(Guid id, CancellationToken cancellationToken) =>
-        Ok(await reservations.ApproveAsync(id, cancellationToken));
+    public async Task<ActionResult<ReservationResponse>> Approve(
+        Guid id,
+        [FromHeader(Name = IfMatchHeader.Name)] string? ifMatch,
+        CancellationToken cancellationToken) =>
+        Ok(await reservations.ApproveAsync(id, IfMatchHeader.Parse(ifMatch), cancellationToken));
 
     [HttpPost("{id:guid}/reject")]
     [ProducesResponseType<ReservationResponse>(StatusCodes.Status200OK)]
@@ -57,8 +61,10 @@ public sealed class ReservationsController(IReservationService reservations) : C
         Guid id,
         [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)]
         ChangeReservationStatusRequest? request,
+        [FromHeader(Name = IfMatchHeader.Name)] string? ifMatch,
         CancellationToken cancellationToken) =>
-        Ok(await reservations.RejectAsync(id, request ?? new ChangeReservationStatusRequest(null), cancellationToken));
+        Ok(await reservations.RejectAsync(
+            id, request ?? new ChangeReservationStatusRequest(null), IfMatchHeader.Parse(ifMatch), cancellationToken));
 
     [HttpPost("{id:guid}/cancel")]
     [ProducesResponseType<ReservationResponse>(StatusCodes.Status200OK)]
@@ -69,6 +75,8 @@ public sealed class ReservationsController(IReservationService reservations) : C
         Guid id,
         [FromBody(EmptyBodyBehavior = Microsoft.AspNetCore.Mvc.ModelBinding.EmptyBodyBehavior.Allow)]
         ChangeReservationStatusRequest? request,
+        [FromHeader(Name = IfMatchHeader.Name)] string? ifMatch,
         CancellationToken cancellationToken) =>
-        Ok(await reservations.CancelAsync(id, request ?? new ChangeReservationStatusRequest(null), cancellationToken));
+        Ok(await reservations.CancelAsync(
+            id, request ?? new ChangeReservationStatusRequest(null), IfMatchHeader.Parse(ifMatch), cancellationToken));
 }

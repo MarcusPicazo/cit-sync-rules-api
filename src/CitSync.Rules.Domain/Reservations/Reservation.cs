@@ -34,6 +34,9 @@ public sealed class Reservation
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedUtc { get; private set; }
 
+    /// <summary>SQL Server rowversion: changes on every UPDATE (optimistic concurrency).</summary>
+    public byte[] RowVersion { get; private set; } = [];
+
     public Reservation(
         Guid resourceId,
         string requesterId,

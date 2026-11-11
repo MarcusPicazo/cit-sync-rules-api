@@ -23,6 +23,50 @@ namespace CitSync.Rules.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("CitSync.Rules.Domain.Auditing.AuditEntry", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("After")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Before")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Entity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("TimestampUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Entity", "EntityId", "TimestampUtc");
+
+                    b.ToTable("AuditEntries", "rules");
+                });
+
             modelBuilder.Entity("CitSync.Rules.Domain.Reservations.Reservation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -56,6 +100,12 @@ namespace CitSync.Rules.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<DateTime>("StartUtc")
                         .HasColumnType("datetime2");
@@ -129,6 +179,123 @@ namespace CitSync.Rules.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CitSync.Rules.Domain.RuleSets.RuleSet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("ActiveVersionNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("LatestVersionNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ScopeKey")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("Scope", "ScopeKey")
+                        .IsUnique();
+
+                    b.ToTable("RuleSets", "rules");
+                });
+
+            modelBuilder.Entity("CitSync.Rules.Domain.RuleSets.RuleSetVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ActivatedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RetiredUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewComment")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ReviewedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("RuleSetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("SubmittedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("SubmittedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RuleSetId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("RuleSetVersions", "rules");
+                });
+
             modelBuilder.Entity("CitSync.Rules.Domain.Reservations.Reservation", b =>
                 {
                     b.HasOne("CitSync.Rules.Domain.Resources.Resource", null)
@@ -136,6 +303,52 @@ namespace CitSync.Rules.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ResourceId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CitSync.Rules.Domain.RuleSets.RuleSetVersion", b =>
+                {
+                    b.HasOne("CitSync.Rules.Domain.RuleSets.RuleSet", null)
+                        .WithMany("Versions")
+                        .HasForeignKey("RuleSetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsMany("CitSync.Rules.Domain.RuleSets.RuleDefinition", "Rules", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int");
+
+                            SqlServerPropertyBuilderExtensions.UseIdentityColumn(b1.Property<int>("Id"));
+
+                            b1.Property<string>("Parameters")
+                                .IsRequired()
+                                .HasColumnType("nvarchar(max)");
+
+                            b1.Property<Guid>("RuleSetVersionId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Type")
+                                .IsRequired()
+                                .HasMaxLength(30)
+                                .HasColumnType("nvarchar(30)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("RuleSetVersionId");
+
+                            b1.ToTable("RuleSetVersionRules", "rules");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RuleSetVersionId");
+                        });
+
+                    b.Navigation("Rules");
+                });
+
+            modelBuilder.Entity("CitSync.Rules.Domain.RuleSets.RuleSet", b =>
+                {
+                    b.Navigation("Versions");
                 });
 #pragma warning restore 612, 618
         }

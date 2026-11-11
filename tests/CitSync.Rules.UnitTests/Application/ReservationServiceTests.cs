@@ -103,7 +103,7 @@ public class ReservationServiceTests
     [Fact]
     public async Task Approve_unknown_reservation_throws_not_found()
     {
-        var act = () => _sut.ApproveAsync(Guid.NewGuid(), CancellationToken.None);
+        var act = () => _sut.ApproveAsync(Guid.NewGuid(), expectedVersion: null, CancellationToken.None);
 
         await act.Should().ThrowAsync<NotFoundException>();
     }
@@ -117,7 +117,7 @@ public class ReservationServiceTests
         reservation.Reject(null);
         _reservations.GetForUpdateAsync(reservation.Id, Arg.Any<CancellationToken>()).Returns(reservation);
 
-        var act = () => _sut.ApproveAsync(reservation.Id, CancellationToken.None);
+        var act = () => _sut.ApproveAsync(reservation.Id, expectedVersion: null, CancellationToken.None);
 
         await act.Should().ThrowAsync<DomainException>();
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());

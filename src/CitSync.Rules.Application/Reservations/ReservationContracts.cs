@@ -44,7 +44,8 @@ public sealed record ReservationResponse(
     string Subject,
     ReservationStatus Status,
     string? StatusReason,
-    DateTime CreatedUtc)
+    DateTime CreatedUtc,
+    string Version)
 {
     public static ReservationResponse From(Reservation reservation)
     {
@@ -63,6 +64,7 @@ public sealed record ReservationResponse(
             reservation.Subject,
             reservation.Status,
             reservation.StatusReason,
-            reservation.CreatedUtc);
+            reservation.CreatedUtc,
+            ConcurrencyGuard.ToToken(reservation.RowVersion));
     }
 }

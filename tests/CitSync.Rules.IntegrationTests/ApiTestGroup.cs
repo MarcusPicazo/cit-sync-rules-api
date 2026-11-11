@@ -23,6 +23,14 @@ internal static class TestJson
         Converters = { new JsonStringEnumConverter() },
     };
 
+    /// <summary>A client that identifies itself with the X-Actor header (who approves, who audits).</summary>
+    public static HttpClient CreateClient(this RulesApiFactory factory, string actor)
+    {
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Actor", actor);
+        return client;
+    }
+
     public static async Task<T> ReadAsync<T>(this HttpResponseMessage response) =>
         (await response.Content.ReadFromJsonAsync<T>(Options))!;
 

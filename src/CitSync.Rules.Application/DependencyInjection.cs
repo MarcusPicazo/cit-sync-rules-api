@@ -1,4 +1,6 @@
+using CitSync.Rules.Application.Auditing;
 using CitSync.Rules.Application.Reservations;
+using CitSync.Rules.Application.RuleSets;
 using CitSync.Rules.Application.Resources;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +24,8 @@ public static class DependencyInjection
 
         services.AddScoped<IResourceService, ResourceService>();
         services.AddScoped<IReservationService, ReservationService>();
+        services.AddScoped<IRuleSetService, RuleSetService>();
+        services.AddScoped<IAuditService, AuditService>();
 
         return services;
     }
