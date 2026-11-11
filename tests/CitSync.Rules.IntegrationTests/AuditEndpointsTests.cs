@@ -92,7 +92,7 @@ public class AuditEndpointsTests(RulesApiFactory factory)
         entries.Should().ContainSingle().Which.Actor.Should().Be("anonymous");
     }
 
-    [Fact(Skip = "TODO(Marcus): remove after implementing ResolveUpdateAction in AuditSaveChangesInterceptor")]
+    [Fact]
     public async Task Soft_delete_is_audited_as_Deleted()
     {
         using var client = factory.CreateClient("admin.demo");

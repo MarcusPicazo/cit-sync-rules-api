@@ -100,14 +100,20 @@ internal sealed class AuditSaveChangesInterceptor(ICurrentActor actor, TimeProvi
     /// </summary>
     private static AuditAction ResolveUpdateAction(EntityEntry entry)
     {
-        // TODO(Marcus): return AuditAction.Deleted when this update is a soft delete.
-        //   - The entity type may or may not have an "IsDeleted" property: use
-        //     entry.Metadata.FindProperty("IsDeleted") to check without throwing.
-        //   - It is a soft delete only if that property IS MODIFIED in this save, its original
-        //     value was false and its current value is true (look at entry.Property(...).IsModified,
-        //     .OriginalValue and .CurrentValue; they are object?, so think about how to compare them).
-        // Then remove the Skip from Soft_delete_is_audited_as_Deleted in IntegrationTests/AuditEndpointsTests.cs.
-        _ = entry;
+        // Not every entity has IsDeleted: FindProperty returns null instead of throwing.
+        var isDeleted = entry.Metadata.FindProperty("IsDeleted");
+        if (isDeleted is not null)
+        {
+            var property = entry.Property(isDeleted.Name);
+
+            // OriginalValue/CurrentValue are object?, so use type patterns ("is false"/"is true")
+            // instead of casting: they also handle null safely.
+            if (property.IsModified && property.OriginalValue is false && property.CurrentValue is true)
+            {
+                return AuditAction.Deleted;
+            }
+        }
+
         return AuditAction.Updated;
     }
 
