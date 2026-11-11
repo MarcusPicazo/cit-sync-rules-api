@@ -98,16 +98,16 @@ public sealed class Reservation
 
     public void Cancel(string? reason)
     {
-        // TODO(Marcus): implement the Cancel transition.
-        //   - Allowed from Pending AND from Approved (a professor can cancel a class that was already approved).
-        //   - From Rejected or Cancelled it must throw DomainException with a clear message
-        //     (look at EnsureStatus below: you need a variant that accepts more than one status).
-        //   - Set Status = Cancelled and StatusReason = NormalizeReason(reason).
-        // Then remove the Skip from the Cancel_* tests in UnitTests/Domain/ReservationTests.cs
-        // and from Cancel_* in IntegrationTests/ReservationsEndpointsTests.cs.
-        _ = reason;
-        _ = Status;
-        throw new NotImplementedException("TODO(Marcus): Reservation.Cancel");
+        // Allowed from Pending and from Approved (a professor can cancel a class that was already approved).
+        // From Rejected or Cancelled it is a business-rule violation -> DomainException -> 409 Conflict.
+        if (Status is not (ReservationStatus.Pending or ReservationStatus.Approved))
+        {
+            throw new DomainException(
+                $"Cannot cancel reservation {Id}: it is {Status}, it must be {ReservationStatus.Pending} or {ReservationStatus.Approved}.");
+        }
+
+        Status = ReservationStatus.Cancelled;
+        StatusReason = NormalizeReason(reason);
     }
 
     public void SoftDelete(DateTime utcNow)

@@ -130,7 +130,7 @@ public class ReservationsEndpointsTests(RulesApiFactory factory)
         page!.Items.Should().ContainSingle().Which.Id.Should().Be(approved.Id);
     }
 
-    [Fact(Skip = "TODO(Marcus): remove after implementing Reservation.Cancel")]
+    [Fact]
     public async Task Cancel_approved_reservation_returns_cancelled()
     {
         using var client = factory.CreateClient();

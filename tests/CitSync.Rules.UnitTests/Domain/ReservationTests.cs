@@ -118,7 +118,7 @@ public class ReservationTests
         reservation.DeletedUtc.Should().Be(first);
     }
 
-    [Fact(Skip = "TODO(Marcus): remove after implementing Reservation.Cancel")]
+    [Fact]
     public void Cancel_from_pending_sets_cancelled_and_reason()
     {
         var reservation = NewReservation();
@@ -129,7 +129,7 @@ public class ReservationTests
         reservation.StatusReason.Should().Be("Se suspendió la clase");
     }
 
-    [Fact(Skip = "TODO(Marcus): remove after implementing Reservation.Cancel")]
+    [Fact]
     public void Cancel_from_approved_is_allowed()
     {
         var reservation = NewReservation();
@@ -141,14 +141,21 @@ public class ReservationTests
         reservation.StatusReason.Should().BeNull();
     }
 
-    [Fact(Skip = "TODO(Marcus): remove after implementing Reservation.Cancel")]
+    [Fact]
     public void Cancel_from_rejected_or_cancelled_throws_domain_exception()
     {
         var rejected = NewReservation();
         rejected.Reject(null);
 
-        var act = () => rejected.Cancel(null);
+        var actOnRejected = () => rejected.Cancel(null);
 
-        act.Should().Throw<DomainException>();
+        actOnRejected.Should().Throw<DomainException>().WithMessage("*Rejected*");
+
+        var cancelled = NewReservation();
+        cancelled.Cancel(null);
+
+        var actOnCancelled = () => cancelled.Cancel(null);
+
+        actOnCancelled.Should().Throw<DomainException>().WithMessage("*Cancelled*");
     }
 }
