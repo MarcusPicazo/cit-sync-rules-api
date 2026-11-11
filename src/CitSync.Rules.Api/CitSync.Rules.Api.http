@@ -6,3 +6,49 @@ GET {{baseUrl}}/health
 
 GET {{baseUrl}}/api/v1/info
 Accept: application/json
+
+### Create a resource (fictional demo data)
+# @name createResource
+POST {{baseUrl}}/api/v1/resources
+Content-Type: application/json
+
+{
+  "name": "Laboratorio de Cómputo 1",
+  "category": "Lab",
+  "capacity": 30,
+  "building": "Edificio A"
+}
+
+###
+
+GET {{baseUrl}}/api/v1/resources?page=1&pageSize=20
+
+### Create a reservation (9:00–11:00 Mexico City time)
+# @name createReservation
+POST {{baseUrl}}/api/v1/reservations
+Content-Type: application/json
+
+{
+  "resourceId": "{{createResource.response.body.$.id}}",
+  "requesterId": "A00000",
+  "requesterRole": "Alumno",
+  "start": "2030-03-04T09:00:00-06:00",
+  "end": "2030-03-04T11:00:00-06:00",
+  "quantity": 2,
+  "subject": "Programación"
+}
+
+###
+
+POST {{baseUrl}}/api/v1/reservations/{{createReservation.response.body.$.id}}/approve
+
+###
+
+POST {{baseUrl}}/api/v1/reservations/{{createReservation.response.body.$.id}}/reject
+Content-Type: application/json
+
+{ "reason": "Laboratorio en mantenimiento" }
+
+###
+
+GET {{baseUrl}}/api/v1/reservations?status=Pending&from=2030-03-01T00:00:00-06:00

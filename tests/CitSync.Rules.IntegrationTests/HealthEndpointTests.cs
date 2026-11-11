@@ -3,7 +3,8 @@ using FluentAssertions;
 
 namespace CitSync.Rules.IntegrationTests;
 
-public class HealthEndpointTests(RulesApiFactory factory) : IClassFixture<RulesApiFactory>
+[Collection(ApiTestGroup.Name)]
+public class HealthEndpointTests(RulesApiFactory factory)
 {
     [Fact]
     public async Task Health_returns_200_when_sql_server_is_reachable()

@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using Asp.Versioning;
+using CitSync.Rules.Api.ErrorHandling;
 using CitSync.Rules.Api.OpenApi;
 using CitSync.Rules.Application;
 using CitSync.Rules.Infrastructure;
@@ -9,10 +11,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers(options =>
+    {
+        // With <Nullable>enable</Nullable>, MVC would add an implicit [Required] to every
+        // non-nullable string and answer 400 before FluentValidation runs. We want ONE source of
+        // validation rules (the validators), so we turn that off.
+        options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+    })
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // RFC 7807: every error (unhandled exception, 404, 400...) is returned as application/problem+json.
-builder.Services.AddProblemDetails();
+builder.Services.AddProblemDetails(options =>
+    options.CustomizeProblemDetails = context =>
+        context.ProblemDetails.Instance ??=
+            $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}");
+builder.Services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
 
 builder.Services
     .AddApiVersioning(options =>

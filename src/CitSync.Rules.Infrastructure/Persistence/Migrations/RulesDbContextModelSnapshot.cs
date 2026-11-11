@@ -23,6 +23,75 @@ namespace CitSync.Rules.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("CitSync.Rules.Domain.Reservations.Reservation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequesterId")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("RequesterRole")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("ResourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("StartUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("StatusReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("ResourceId", "StartUtc", "EndUtc")
+                        .HasDatabaseName("IX_Reservations_ResourceId_StartUtc_EndUtc_Active")
+                        .HasFilter("[IsDeleted] = 0 AND [Status] <> 'Cancelled'");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("ResourceId", "StartUtc", "EndUtc"), new[] { "Status", "Quantity" });
+
+                    b.ToTable("Reservations", "rules", t =>
+                        {
+                            t.HasCheckConstraint("CK_Reservations_Quantity", "[Quantity] >= 1");
+
+                            t.HasCheckConstraint("CK_Reservations_Range", "[EndUtc] > [StartUtc]");
+                        });
+                });
+
             modelBuilder.Entity("CitSync.Rules.Domain.Resources.Resource", b =>
                 {
                     b.Property<Guid>("Id")
@@ -58,6 +127,15 @@ namespace CitSync.Rules.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_Resources_Capacity", "[Capacity] >= 1");
                         });
+                });
+
+            modelBuilder.Entity("CitSync.Rules.Domain.Reservations.Reservation", b =>
+                {
+                    b.HasOne("CitSync.Rules.Domain.Resources.Resource", null)
+                        .WithMany()
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

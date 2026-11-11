@@ -1,4 +1,6 @@
+using CitSync.Rules.Application.Abstractions;
 using CitSync.Rules.Infrastructure.Persistence;
+using CitSync.Rules.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +26,12 @@ public static class DependencyInjection
                 sql.MigrationsHistoryTable("__EFMigrationsHistory", RulesDbContext.Schema);
                 sql.EnableRetryOnFailure();
             }));
+
+        // Same scoped DbContext instance per request: repositories track changes on it,
+        // IUnitOfWork.SaveChangesAsync commits them together.
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<RulesDbContext>());
+        services.AddScoped<IResourceRepository, ResourceRepository>();
+        services.AddScoped<IReservationRepository, ReservationRepository>();
 
         return services;
     }
