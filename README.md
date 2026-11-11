@@ -84,7 +84,7 @@ Requirements: .NET 10 SDK, Docker Desktop, and the EF tool (`dotnet tool install
 | # | Phase | Status |
 |---|---|---|
 | 1 | Solution skeleton, Docker SQL Server, DbContext, first migration, health check, Swagger, CI | ✅ Done |
-| 2 | Resources + Reservations CRUD with FluentValidation and ProblemDetails | ✅ Done (owner TODOs pending) |
+| 2 | Resources + Reservations CRUD with FluentValidation and ProblemDetails | ✅ Done |
 | 3 | RuleSets with versioning + approval state machine + audit interceptor + optimistic concurrency | ⏳ Next |
 | 4 | Rule evaluation engine (strategy pattern) + `POST /api/v1/rules/evaluate` | — |
 | 5 | Full unit + integration coverage of every rule type and state transition | — |
