@@ -92,14 +92,43 @@ public class ListReservationsQueryValidatorTests
         result.IsValid.Should().BeFalse();
     }
 
-    [Fact(Skip = "TODO(Marcus): remove after adding the From/To rule in ListReservationsQueryValidator")]
+    [Fact]
     public void To_must_be_after_From()
     {
         var from = new DateTimeOffset(2030, 1, 15, 0, 0, 0, TimeSpan.Zero);
 
         var result = _validator.TestValidate(new ListReservationsQuery { From = from, To = from.AddDays(-1) });
 
+        result.ShouldHaveValidationErrorFor(q => q.To)
+            .WithErrorMessage("'To' must be after 'From'.");
+    }
+
+    [Fact]
+    public void To_equal_to_From_fails_because_the_window_is_empty()
+    {
+        var instant = new DateTimeOffset(2030, 1, 15, 0, 0, 0, TimeSpan.Zero);
+
+        var result = _validator.TestValidate(new ListReservationsQuery { From = instant, To = instant });
+
         result.ShouldHaveValidationErrorFor(q => q.To);
+    }
+
+    [Fact]
+    public void To_after_From_is_fine()
+    {
+        var from = new DateTimeOffset(2030, 1, 15, 0, 0, 0, TimeSpan.Zero);
+
+        var result = _validator.TestValidate(new ListReservationsQuery { From = from, To = from.AddDays(1) });
+
+        result.ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Fact]
+    public void Only_To_is_fine()
+    {
+        var result = _validator.TestValidate(new ListReservationsQuery { To = DateTimeOffset.UnixEpoch });
+
+        result.ShouldNotHaveAnyValidationErrors();
     }
 
     [Fact]

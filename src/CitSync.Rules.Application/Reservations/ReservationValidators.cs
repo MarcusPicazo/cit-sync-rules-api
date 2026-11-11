@@ -39,10 +39,10 @@ public sealed class ListReservationsQueryValidator : AbstractValidator<ListReser
         Include(new PageQueryValidator());
         RuleFor(q => q.Status).IsInEnum();
 
-        // TODO(Marcus): when BOTH From and To are present, To must be after From.
-        // Hint: RuleFor(...).GreaterThan(...).When(...). Both are nullable, so check how
-        // FluentValidation compares nullable properties, and give it a clear message.
-        // Then remove the Skip from To_must_be_after_From in
-        // UnitTests/Application/ListReservationsQueryValidatorTests.cs.
+        // Only when BOTH dates are present: an open-ended range (just From or just To) is valid.
+        // From == To is rejected too, because it is an empty window.
+        RuleFor(q => q.To)
+            .GreaterThan(q => q.From).WithMessage("'To' must be after 'From'.")
+            .When(q => q.From.HasValue && q.To.HasValue);
     }
 }
