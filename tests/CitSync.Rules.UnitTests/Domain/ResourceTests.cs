@@ -27,7 +27,7 @@ public class ResourceTests
         act.Should().Throw<ArgumentException>();
     }
 
-    [Theory(Skip = "TODO(Marcus): remove this Skip after adding the capacity guard in Resource")]
+    [Theory]
     [InlineData(0)]
     [InlineData(-5)]
     public void Constructor_rejects_non_positive_capacity(int capacity)

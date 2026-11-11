@@ -23,9 +23,7 @@ public sealed class Resource
     public Resource(string name, ResourceCategory category, int capacity, string? building = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        // TODO(Marcus): validate that capacity is at least 1 and throw ArgumentOutOfRangeException otherwise
-        // (hint: ArgumentOutOfRangeException has a static helper for this, like the one used for name above).
-        // Then make the test Constructor_rejects_non_positive_capacity in the UnitTests project pass.
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(capacity);
 
         Id = Guid.NewGuid();
         Name = name.Trim();
