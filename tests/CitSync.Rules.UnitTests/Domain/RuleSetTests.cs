@@ -154,7 +154,7 @@ public class RuleSetTests
         approveRejected.Should().Throw<DomainException>();
     }
 
-    [Fact(Skip = "TODO(Marcus): remove after adding the four-eyes check in RuleSetVersion.Approve")]
+    [Fact]
     public void Approve_by_the_submitter_is_rejected()
     {
         var ruleSet = NewRuleSet();

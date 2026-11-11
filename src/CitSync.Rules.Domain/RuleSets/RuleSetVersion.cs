@@ -87,12 +87,13 @@ public sealed class RuleSetVersion
         ArgumentException.ThrowIfNullOrWhiteSpace(actor);
         EnsureState(RuleSetVersionState.PendingApproval, "approve");
 
-        // TODO(Marcus): four-eyes principle ("principio de los cuatro ojos").
-        // Whoever submitted the version must NOT be the one who approves it.
-        // If actor equals SubmittedBy (compare ignoring case: "Ana" and "ana" are the same person),
-        // throw DomainException with a clear message. Look at the string.Equals overload that takes
-        // a StringComparison, and think about which comparison is right for identifiers.
-        // Then remove the Skip from Approve_by_the_submitter_is_rejected in UnitTests/Domain/RuleSetTests.cs.
+        // Four-eyes principle: whoever submitted the version cannot approve it.
+        // OrdinalIgnoreCase: identifiers are compared byte by byte (no culture rules), and "Ana" == "ana".
+        if (string.Equals(actor, SubmittedBy, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new DomainException(
+                $"Version {Number} cannot be approved by '{actor}': whoever submits a version cannot approve it (four-eyes principle).");
+        }
 
         State = RuleSetVersionState.Active;
         ReviewedBy = actor;
