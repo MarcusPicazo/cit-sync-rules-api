@@ -18,6 +18,28 @@ public class HealthEndpointTests(RulesApiFactory factory)
     }
 
     [Fact]
+    public async Task Health_live_returns_200_without_checking_dependencies()
+    {
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync(new Uri("/health/live", UriKind.Relative));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await response.Content.ReadAsStringAsync()).Should().Be("Healthy");
+    }
+
+    [Fact]
+    public async Task Health_ready_returns_200_when_sql_server_is_reachable()
+    {
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync(new Uri("/health/ready", UriKind.Relative));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await response.Content.ReadAsStringAsync()).Should().Be("Healthy");
+    }
+
+    [Fact]
     public async Task Unknown_route_returns_problem_details()
     {
         using var client = factory.CreateClient();

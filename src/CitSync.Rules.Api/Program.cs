@@ -5,6 +5,7 @@ using CitSync.Rules.Api.OpenApi;
 using CitSync.Rules.Application;
 using CitSync.Rules.Infrastructure;
 using CitSync.Rules.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,11 +72,22 @@ if (app.Environment.IsDevelopment())
 
 app.MapControllers();
 
+// Full check: runs every registered check.
 app.MapHealthChecks("/health");
-// TODO(Marcus): add two more endpoints next to /health:
-//   /health/live  -> runs NO checks (only proves the process answers HTTP)
-//   /health/ready -> runs only the checks tagged "ready" (SQL Server)
-// Hint: MapHealthChecks accepts a HealthCheckOptions with a Predicate.
-// Be ready to explain in the interview why Kubernetes wants liveness and readiness separated.
+
+// Liveness: runs NO checks. It only proves the process is up and answering HTTP.
+// It must not depend on anything external, or a database outage would make
+// Kubernetes restart every pod in a loop.
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = _ => false
+});
+
+// Readiness: runs only the checks tagged "ready" (SQL Server).
+// If it fails, Kubernetes takes the pod out of the load balancer without restarting it.
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
 
 app.Run();
