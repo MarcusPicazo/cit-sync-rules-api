@@ -11,6 +11,10 @@ spaces/labs, hardware inventory and reservations. Today ALL booking rules live i
 - status changes and deletes go straight to Firestore (`updateDoc` / `deleteDoc`) with no audit trail
 - rules such as subjects or allowed hours are hardcoded
 
+IMPORTANT: github.com/MarcusPicazo/cit-sync is the PUBLIC DEMO the owner has permission to share. The real
+school system is private. Use only the demo and fictional seed data (no real names, students or school data),
+and never reference the private codebase.
+
 This repo moves that logic server-side into a **C# / ASP.NET Core rules service** that CIT-Sync (and any
 other school app) calls to create, version, approve and evaluate scheduling rules.
 
